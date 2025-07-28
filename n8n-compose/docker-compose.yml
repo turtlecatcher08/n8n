@@ -1,0 +1,35 @@
+# This file will start the n8n service and connect it to your
+# existing Docker network named 'web-services'.
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: always
+    env_file:
+      - .env
+    environment:
+      # These variables are supplemented by the .env file.
+      # They configure n8n to be accessible via your Cloudflare Tunnel.
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./local-files:/files
+    ports:
+      - "5678:5678"
+    networks:
+      # Connects to the same network as your 'cloudflared-tunnel' container.
+      - web-services
+
+# This tells Docker Compose to use an existing network
+# and not to create a new one.
+networks:
+  web-services:
+    external: true
+volumes:
+  n8n_data:
